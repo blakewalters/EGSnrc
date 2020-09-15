@@ -2078,7 +2078,7 @@ DO kk=1,kkmax[
     ]
     WRITE(15,*);
 ]
-1399 FORMAT($IMAXi1);
+1399 FORMAT($IMAXi2);
 DO kk=1,kkmax[
     DO jj=1,jjmax[
         WRITE(15,*) (rho($IR(ii,jj,kk)),ii=1,iimax);
