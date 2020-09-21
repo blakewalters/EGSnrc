@@ -1521,12 +1521,13 @@ IF(NMED = 0)[ "Input data from CT data file as processed by the code ctcreate"
           read($CTUnitNumber,:medformat:) (medChar(i),i=1,IMAX);
           "Convert from ASCII to a number"
           DO i=1,IMAX[
-            med($IR(i,j,k)) = mod((iachar(medChar(i)) + 46), 95) + 1;
+            med($IR(i,j,k)) = mod((iachar(medChar(i)) + 47), 95);
           ]
        ]
        read($CTUnitNumber,*);
     ]
     :medformat: FORMAT($IMAXa1);
+
     "input the densities"
     maxrhor=0.;
     minrhor=999.;
