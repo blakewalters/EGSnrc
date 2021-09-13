@@ -712,7 +712,7 @@ REPLACE {$GEO_SHIFT_1_(#)} WITH {
 }
 
 ;IMPLICIT NONE;
-;COMIN/CMs,CM_$SYNCHDMLC,EPCONT,STACK,USER,EGS-IO/;
+;COMIN/MISC,CMs,CM_$SYNCHDMLC,EPCONT,STACK,USER,EGS-IO/;
 "T>
 "T>**********************************
 "T>TYPE DECLARATIONS FOR HOWFAR_$SYNCHDMLC
@@ -763,7 +763,6 @@ IF(ORIENT_$SYNCHDMLC=1) [
     XYL(1)=Y(NP); XYL(2)=X(NP);UVL(1)=V(NP);UVL(2)=U(NP);]
 ELSE[ XYL(1)=X(NP); XYL(2)=Y(NP);UVL(1)=U(NP);UVL(2)=V(NP);]
 ;
-
 STEP_UNIT=0.0;
 COUNT = 0;
 OUTOFCMFLAG=0;
@@ -839,6 +838,13 @@ ELSEIF(IR_$SYNCHDMLC=1 | IR_$SYNCHDMLC=2 | IR_$SYNCHDMLC=3) [
 "=========================
 
 $SYNCHDMLC_FIND(REGION_$SYNCHDMLC,0.0);
+IF(med(ir(np))=1)[
+  write(*,*)' ir, iq,np,x,y,z ',ir(np),iq(np),np,x(np),y(np),z(np);
+  write(*,*)' ir_loc, real_ir ',REGION_$SYNCHDMLC,IRSTART_$SYNCHDMLC+
+       REGION_$SYNCHDMLC-1;
+  write(*,*)' leafis,ny,nz ',leafis,ny,nz;
+  write(*,*);
+]
 
 IF(REGION_$SYNCHDMLC=4) [ "Particle is in the air gap "
   REGION_$SYNCHDMLC=IRSTART_$SYNCHDMLC-1+REGION_$SYNCHDMLC;
@@ -2551,9 +2557,11 @@ IF(TOT_LEAF_$SYNCHDMLC>0) [
      ]
 
      DO J = 1, 7 [
+       write(*,*)'leafis, leaftype, j, yreg ',i,LEAFTYPE_$SYNCHDMLC(I),j,
+                                              YREG_$SYNCHDMLC(I,J);
        SURPARA1_$SYNCHDMLC(I,J)=YREG_$SYNCHDMLC(I,J)/TEMP1;
-     OUTPUT I, J, YREG_$SYNCHDMLC(I,J); (I5, I5, F12.6, ' ', $/);"
-      OUTPUT I, J, SURPARA1_$SYNCHDMLC(I,J); (I5, I5, F12.6, ' ', $/);"
+     "OUTPUT I, J, YREG_$SYNCHDMLC(I,J); (I5, I5, F12.6, ' ', $/);"
+     " OUTPUT I, J, SURPARA1_$SYNCHDMLC(I,J); (I5, I5, F12.6, ' ', $/);"
      ];"End of J Loop"
   ]; "End of K Loop"
  ]; "End of L loop"
@@ -2908,6 +2916,7 @@ DO L=1,TOT_LEAF_$SYNCHDMLC[
       SUBINDEX_$SYNCHDMLC(L,I,4,6)=2;
       SUBINDEX_$SYNCHDMLC(L,I,4,7)=2;
       SUBINDEX_$SYNCHDMLC(L,I,4,8)=2;
+
       IF(I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(L),1,5)~=1)[
          SUBINDEX_$SYNCHDMLC(L,I,5,1)=2;
       ]
@@ -2978,9 +2987,12 @@ DO L=1,TOT_LEAF_$SYNCHDMLC[
       ]
       SUBINDEX_$SYNCHDMLC(L,I,2,5)=2;
       SUBINDEX_$SYNCHDMLC(L,I,2,7)=2;
+      SUBINDEX_$SYNCHDMLC(L,I,2,8)=2;
+
       IF(I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(L),1,2)~=1)[
          SUBINDEX_$SYNCHDMLC(L,I,2,9)=2;
       ]
+      SUBINDEX_$SYNCHDMLC(L,I,3,1)=2;
       SUBINDEX_$SYNCHDMLC(L,I,3,2)=2;
       SUBINDEX_$SYNCHDMLC(L,I,3,3)=2;
       SUBINDEX_$SYNCHDMLC(L,I,3,4)=2;
