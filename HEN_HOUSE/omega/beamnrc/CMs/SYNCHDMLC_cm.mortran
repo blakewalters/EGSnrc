@@ -838,13 +838,17 @@ ELSEIF(IR_$SYNCHDMLC=1 | IR_$SYNCHDMLC=2 | IR_$SYNCHDMLC=3) [
 "=========================
 
 $SYNCHDMLC_FIND(REGION_$SYNCHDMLC,0.0);
-IF(med(ir(np))=1)[
+/*
+IF(LEAFIS >=1 & LEAFIS<=TOT_LEAF_$SYNCHDMLC)[
+IF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=3 & NY=1)[
   write(*,*)' ir, iq,np,x,y,z ',ir(np),iq(np),np,x(np),y(np),z(np);
   write(*,*)' ir_loc, real_ir ',REGION_$SYNCHDMLC,IRSTART_$SYNCHDMLC+
        REGION_$SYNCHDMLC-1;
   write(*,*)' leafis,ny,nz ',leafis,ny,nz;
   write(*,*);
 ]
+]
+*/
 
 IF(REGION_$SYNCHDMLC=4) [ "Particle is in the air gap "
   REGION_$SYNCHDMLC=IRSTART_$SYNCHDMLC-1+REGION_$SYNCHDMLC;
@@ -2557,8 +2561,6 @@ IF(TOT_LEAF_$SYNCHDMLC>0) [
      ]
 
      DO J = 1, 7 [
-       write(*,*)'leafis, leaftype, j, yreg ',i,LEAFTYPE_$SYNCHDMLC(I),j,
-                                              YREG_$SYNCHDMLC(I,J);
        SURPARA1_$SYNCHDMLC(I,J)=YREG_$SYNCHDMLC(I,J)/TEMP1;
      "OUTPUT I, J, YREG_$SYNCHDMLC(I,J); (I5, I5, F12.6, ' ', $/);"
      " OUTPUT I, J, SURPARA1_$SYNCHDMLC(I,J); (I5, I5, F12.6, ' ', $/);"
