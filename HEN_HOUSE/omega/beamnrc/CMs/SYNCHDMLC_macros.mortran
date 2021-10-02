@@ -521,7 +521,9 @@ ELSE ["inside leaf bank"
     IF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=2 | LEAFTYPE_$SYNCHDMLC(LEAFIS)=4) [
        "Originally on Target (Quarter or Half) Leaf"
 
-       IF((NY=5|NY=6) & (NZ=7|NZ=8|NZ=9) & (LEAFIS~=TOT_LEAF_$SYNCHDMLC)) [
+       IF(LEAFIS~=TOT_LEAF_$SYNCHDMLC & (((NY=5|NY=6) & (NZ=7|NZ=8|NZ=9)) |
+           (I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(LEAFIS),1,6)=1 &
+            NY=6 & NZ>1))) [
 
          "In groove check if on next leaf"
          IF(XYFL(1)>SURPARA1_$SYNCHDMLC(LEAFIS+1,1)*
@@ -628,7 +630,32 @@ ELSE ["inside leaf bank"
            ];
          ]
        ];
-     ];
+     ]
+     ELSEIF(LEAFIS ~=1 &
+           I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(LEAFIS),1,1)=1 &
+           NY=1 & NZ<9)[
+       "check if particle is in region of previous leaf"
+       IF(XYFL(1)<SURPARA1_$SYNCHDMLC(LEAFIS-1,7)*
+             (ZFL-ZFOCUS_$SYNCHDMLC(1))) [
+
+         LEAFIS=LEAFIS-1;
+         NY=6;
+         IF(XYFL(1)<SURPARA1_$SYNCHDMLC(LEAFIS,6)*
+             (ZFL-ZFOCUS_$SYNCHDMLC(1))) [
+              NY=5;
+         ]
+         IF(ZFL<ZREG_$SYNCHDMLC(LEAFIS,1))[
+              NZ=1;
+         ] ELSEIF(ZFL>ZREG_$SYNCHDMLC(LEAFIS,10))[
+              NZ=9;
+         ] ELSE[
+             DO I=1,9 ["recheck Z region"
+              IF((ZFL>=ZREG_$SYNCHDMLC(LEAFIS,I)) &
+                (ZREG_$SYNCHDMLC(LEAFIS,I+1)>=ZFL)) [NZ=I; EXIT];
+              ];
+         ]
+       ]
+     ]
     ];
 "Now determine X region index"
   IF(ENDTYPE_$SYNCHDMLC=1)[
@@ -681,421 +708,6 @@ ELSE ["inside leaf bank"
 ;}
 ;
 
-REPLACE {$SYNCHDMLC_GET_ZBOUNDS(#,#);} WITH {;
-"get boundaries in Z-direction"
-  IF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=2 | LEAFTYPE_$SYNCHDMLC(LEAFIS)=4) [
-                                   "Target leaf"
-
-    IF(NY=1) [
-        IF(NZ<=3) [ ZLHS=1; I=LEAFIS; ZRHS=4; J=LEAFIS; ]
-        ELSEIF(NZ=4) [ ZLHS=4; I=LEAFIS; ZRHS=5; J=LEAFIS; ]
-        ELSEIF(NZ=5) [ ZLHS=5; I=LEAFIS; ZRHS=6; J=LEAFIS; ]
-        ELSE [
-          ZLHS=6; I=LEAFIS;
-          IF(LEAFIS=1)[
-             ZRHS=10; J=LEAFIS;
-          ]
-          ELSE[
-            J=LEAFIS-1;
-            IF(LEAFTYPE_$SYNCHDMLC(J)=1 | LEAFTYPE_$SYNCHDMLC(J)=3)[
-              ZRHS=5;
-            ]
-            ELSEIF(LEAFTYPE_$SYNCHDMLC(J)=5)[ "will eventually have to modify"
-              ZRHS=4;
-            ]
-            IF(ZFL>ZREG_$SYNCHDMLC(J,ZRHS))[
-               ZRHS=10; J=LEAFIS;
-            ]
-          ]
-        ]
-    ]
-    ELSEIF(NY=2) [
-        IF(NZ<=3) [ZLHS=1; I=LEAFIS; ZRHS=4; J=LEAFIS;]
-        ELSEIF(NZ=4) [ZLHS=4; I=LEAFIS; ZRHS=5; J=LEAFIS;]
-        ELSEIF(NZ<=7) [ZLHS=5; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-        ELSE [ZLHS=8; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=3) [
-        IF(I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(LEAFIS),1,4)=1) [
-           IF(NZ=1) [ZLHS=1; I=LEAFIS; ZRHS=2; J=LEAFIS;]
-           ELSEIF(NZ=2) [ZLHS=2; I=LEAFIS; ZRHS=3; J=LEAFIS;]
-           ELSEIF(NZ=3) [ZLHS=3; I=LEAFIS; ZRHS=4; J=LEAFIS;]
-           ELSEIF(NZ=4) [ZLHS=4; I=LEAFIS; ZRHS=5; J=LEAFIS;]
-           ELSEIF(NZ<=7) [ZLHS=5; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-           ELSE [ZLHS=8; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-        ]
-        ELSE [
-           IF(NZ<=3) [ZLHS=1; I=LEAFIS; ZRHS=4; J=LEAFIS;]
-           ELSEIF(NZ=4) [ZLHS=4; I=LEAFIS; ZRHS=5; J=LEAFIS;]
-           ELSEIF(NZ<=8) [ZLHS=5; I=LEAFIS; ZRHS=9; J=LEAFIS;]
-           ELSE [ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-        ]
-    ]
-    ELSEIF(NY=4) [
-        IF(NZ=1) [ZLHS=1; I=LEAFIS; ZRHS=2; J=LEAFIS;]
-        ELSEIF(NZ=2) [ZLHS=2; I=LEAFIS; ZRHS=3; J=LEAFIS;]
-        ELSEIF(NZ=3) [ZLHS=3; I=LEAFIS; ZRHS=4; J=LEAFIS;]
-        ELSEIF(NZ=4) [ZLHS=4; I=LEAFIS; ZRHS=5; J=LEAFIS;]
-        ELSEIF(NZ<=8) [ZLHS=5; I=LEAFIS; ZRHS=9; J=LEAFIS;]
-        ELSE [ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=5) [
-        IF(NZ=1) [ZLHS=1; I=LEAFIS; ZRHS=2; J=LEAFIS;]
-        ELSEIF(NZ=2) [ZLHS=2; I=LEAFIS; ZRHS=3; J=LEAFIS;]
-        ELSEIF(NZ=3) [ZLHS=3; I=LEAFIS; ZRHS=4; J=LEAFIS;]
-        ELSEIF(NZ=4) [ZLHS=4; I=LEAFIS; ZRHS=5; J=LEAFIS;]
-        ELSEIF(NZ<=6) [ZLHS=5; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSE [
-          ZLHS=7; I=LEAFIS;
-          IF(LEAFIS=TOT_LEAF_$SYNCHDMLC)[
-            ZRHS=10; J=LEAFIS;
-          ]
-          ELSE[
-            ZRHS=4; J=LEAFIS+1;
-            IF(ZFL>ZREG_$SYNCHDMLC(J,ZRHS) &
-               I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(J),1,1)=1)[
-                 ZRHS=9;
-            ]
-            IF(ZFL>ZREG_$SYNCHDMLC(J,ZRHS))[
-              ZRHS=10; J=LEAFIS;
-            ]
-          ]
-        ]
-    ]
-    ELSEIF(NY=6) [
-        IF(I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(LEAFIS),1,6)=1) [
-          IF(NZ=1) [ZLHS=1; I=LEAFIS; ZRHS=2; J=LEAFIS;]
-          ELSE[
-           ZLHS=2; I=LEAFIS;
-           IF(LEAFIS=TOT_LEAF_$SYNCHDMLC)[
-              ZRHS=10; J=LEAFIS;
-           ]
-           ELSE[
-              ZRHS=4; J=LEAFIS+1;
-              IF(ZFL>ZREG_$SYNCHDMLC(J,ZRHS) &
-                 I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(J),1,1)=1)[
-                   ZRHS=9;
-              ]
-              IF(ZFL>ZREG_$SYNCHDMLC(J,ZRHS))[
-                 ZRHS=10; J=LEAFIS;
-              ]
-           ]
-          ]
-        ]
-        ELSE [
-          IF(NZ<=2) [ZLHS=1; I=LEAFIS; ZRHS=3; J=LEAFIS;]
-          ELSEIF(NZ=3) [ZLHS=3; I=LEAFIS; ZRHS=4; J=LEAFIS;]
-          ELSEIF(NZ=4) [ZLHS=4; I=LEAFIS; ZRHS=5; J=LEAFIS;]
-          ELSEIF(NZ<=6) [ZLHS=5; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-          ELSE [
-            ZLHS=7; I=LEAFIS;
-            IF(LEAFIS=TOT_LEAF_$SYNCHDMLC)[
-              ZRHS=10; J=LEAFIS;
-            ]
-            ELSE[
-              ZRHS=4; J=LEAFIS+1;
-              IF(ZFL>ZREG_$SYNCHDMLC(J,ZRHS) &
-                 I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(J),1,1)=1)[
-                 ZRHS=9;
-              ]
-              IF(ZFL>ZREG_$SYNCHDMLC(J,ZRHS))[
-                 ZRHS=10; J=LEAFIS;
-              ]
-            ]
-          ]
-        ]
-    ]
-  ] ELSEIF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=1) ["Full leaf"
-    IF(NY=1)[
-      IF(NZ=1)[ ZLHS=1; I=LEAFIS; ZRHS=2; J=LEAFIS; ]
-      ELSEIF(NZ<=3)[ ZLHS=2; I=LEAFIS; ZRHS=4; J=LEAFIS; ]
-      ELSE[
-        ZLHS=4; I=LEAFIS;
-        IF(LEAFIS=1)[
-          ZRHS=10; J=LEAFIS;
-        ]
-        ELSE[
-          J=LEAFIS-1;
-          IF(LEAFTYPE_$SYNCHDMLC(J)=5)[
-            ZRHS=4;
-          ]
-          ELSE[
-            ZRHS=5;
-          ]
-          IF(ZFL>ZREG_$SYNCHDMLC(J,ZRHS))[
-            ZRHS=10; J=LEAFIS;
-          ]
-        ]
-      ]
-    ]
-    ELSEIF(NY=2)[
-      IF(NZ=1)[ ZLHS=1; I=LEAFIS; ZRHS=2; J=LEAFIS; ]
-      ELSEIF(NZ<=5)[ ZLHS=2; I=LEAFIS; ZRHS=5; J=LEAFIS; ]
-      ELSEIF(NZ=6)[ ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS; ]
-      ELSEIF(NZ=7)[ ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS; ]
-      ELSE[ ZLHS=8; I=LEAFIS; ZRHS=10; J=LEAFIS; ]
-    ]
-    ELSEIF(NY=3)[
-      IF(NZ<=2)[ ZLHS=1; I=LEAFIS; ZRHS=3; J=LEAFIS; ]
-      ELSEIF(NZ<=5)[ ZLHS=3; I=LEAFIS; ZRHS=6; J=LEAFIS; ]
-      ELSEIF(NZ=6)[ ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS; ]
-      ELSEIF(NZ=7)[ ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS; ]
-      ELSE[ ZLHS=8; I=LEAFIS; ZRHS=10; J=LEAFIS; ]
-    ]
-    ELSEIF(NY=4)[
-      IF(NZ<=2)[ ZLHS=1; I=LEAFIS; ZRHS=3; J=LEAFIS; ]
-      ELSEIF(NZ<=5)[ ZLHS=3; I=LEAFIS; ZRHS=6; J=LEAFIS; ]
-      ELSEIF(NZ=6)[ ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS; ]
-      ELSEIF(NZ=7)[ ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS; ]
-      ELSEIF(NZ=8)[ ZLHS=8; I=LEAFIS; ZRHS=9; J=LEAFIS; ]
-      ELSE[ ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS; ]
-    ]
-    ELSEIF(NY=5)[
-      IF(NZ<=2)[ ZLHS=1; I=LEAFIS; ZRHS=3; J=LEAFIS; ]
-      ELSEIF(NZ<=5)[ ZLHS=3; I=LEAFIS; ZRHS=6; J=LEAFIS; ]
-      ELSEIF(NZ=6)[ ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS; ]
-      ELSE[ ZLHS=7; I=LEAFIS; ZRHS=10; J=LEAFIS; ]
-    ]
-   ELSEIF(NY=6)[
-      IF(NZ<=4)[
-        ZRHS=5; J=LEAFIS;
-        IF(LEAFIS=TOT_LEAF_$SYNCHDMLC)[
-          ZLHS=1; I=LEAFIS;
-        ]
-        ELSE[
-          I=LEAFIS+1;
-          IF(LEAFTYPE_$SYNCHDMLC(I)=1)[
-            ZLHS=4;
-          ]
-          ELSE[
-            ZLHS=6;
-          ]
-          IF(ZFL<ZREG_$SYNCHDMLC(J,ZLHS))[
-            ZLHS=1; I=LEAFIS;
-          ]
-        ]
-      ]
-      ELSEIF(NZ=5)[ ZLHS=5; I=LEAFIS; ZRHS=6; J=LEAFIS; ]
-      ELSEIF(NZ=6)[ ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS; ]
-      ELSE[ ZLHS=7; I=LEAFIS; ZRHS=10; J=LEAFIS; ]
-    ]
-  ] ELSEIF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=3) [
-    "Half Isocenter leaf"
-    IF(NY=1) [
-        IF(I_LEAF_ALT_DEF_$SYNCHDMLC(3,1,1)=1) [
-          IF(NZ<=8) [
-            ZRHS=9; J=LEAFIS;
-            IF(LEAFIS=1)[
-              ZLHS=1; I=LEAFIS;
-            ]
-            ELSE[
-              I=LEAFIS-1;
-              ZLHS=7;
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS) &
-                I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(I),1,6)=1)[
-                  ZLHS=2;
-              ]
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS))[
-                ZLHS=1; I=LEAFIS;
-              ]
-            ]
-          ]
-          ELSE [ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-        ]
-        ELSE [
-          IF(NZ<=3) [
-            ZRHS=4; J=LEAFIS;
-            IF(LEAFIS=1)[
-              ZLHS=1; I=LEAFIS;
-            ]
-            ELSE[
-              I=LEAFIS-1;
-              ZLHS=7;
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS) &
-                I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(I),1,6)=1)[
-                  ZLHS=2;
-              ]
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS))[
-                ZLHS=1; I=LEAFIS;
-              ]
-            ]
-          ]
-          ELSEIF(NZ<=5) [ZLHS=4; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-          ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-          ELSEIF(NZ=7) [ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-          ELSE [ZLHS=8; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-        ]
-    ]
-    ELSEIF(NY=2) [
-        IF(NZ<=3) [
-          ZRHS=4; J=LEAFIS;
-            IF(LEAFIS=1)[
-              ZLHS=1; I=LEAFIS;
-            ]
-            ELSE[
-              I=LEAFIS-1;
-              ZLHS=7;
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS) &
-                I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(I),1,6)=1)[
-                  ZLHS=2;
-              ]
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS))[
-                ZLHS=1; I=LEAFIS;
-              ]
-            ]
-        ]
-        ELSEIF(NZ<=5) [ZLHS=4; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSEIF(NZ=7) [ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-        ELSEIF(NZ=8) [ZLHS=8; I=LEAFIS; ZRHS=9; J=LEAFIS;]
-        ELSE [ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=3) [
-        IF(NZ=1) [ZLHS=1; I=LEAFIS; ZRHS=2; J=LEAFIS;]
-        ELSEIF(NZ<=5) [ZLHS=2; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSEIF(NZ=7) [ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-        ELSEIF(NZ=8) [ZLHS=8; I=LEAFIS; ZRHS=9; J=LEAFIS;]
-        ELSE [ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=4) [
-        IF(NZ<=2) [ZLHS=1; I=LEAFIS; ZRHS=3; J=LEAFIS;]
-        ELSEIF(NZ<=5) [ZLHS=3; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSEIF(NZ=7) [ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-        ELSEIF(NZ=8) [ZLHS=8; I=LEAFIS; ZRHS=9; J=LEAFIS;]
-        ELSE [ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=5) [
-        IF(NZ<=2) [ZLHS=1; I=LEAFIS; ZRHS=3; J=LEAFIS;]
-        ELSEIF(NZ<=5) [ZLHS=3; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSE [ZLHS=7; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=6) [
-        IF(NZ<=4) [
-          ZRHS=5; J=LEAFIS;
-          IF(LEAFIS=TOT_LEAF_$SYNCHDMLC)[
-            ZLHS=1; I=LEAFIS;
-          ]
-          ELSE[
-            I=LEAFIS+1;
-            IF(LEAFTYPE_$SYNCHDMLC(I)=3)[ "full leaf"
-              ZRHS=4;
-            ]
-            ELSE[ "half or quarter target"
-              ZRHS=6;
-            ]
-            IF(ZFL<ZREG_$SYNCHDMLC(I,ZRHS))[
-              ZLHS=1; I=LEAFIS;
-            ]
-          ]
-        ]
-        ELSEIF(NZ=5) [ZLHS=5; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSE [ZLHS=7; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-  ] ELSE [
-    "Quarter Isocenter leaf"
-    IF(NY=1) [
-        IF(NZ<=4) [
-            ZRHS=5; J=LEAFIS;
-            IF(LEAFIS=1)[
-              ZLHS=1; I=LEAFIS;
-            ]
-            ELSE[
-              I=LEAFIS-1;
-              ZLHS=7;
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS) &
-                I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(I),1,6)=1)[
-                  ZLHS=2;
-              ]
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS))[
-                ZLHS=1; I=LEAFIS;
-              ]
-            ]
-        ]
-        ELSEIF(NZ=5) [ZLHS=5; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSEIF(NZ=7) [ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-        ELSE [ZLHS=8; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=2) [
-        IF(NZ<=4) [
-            ZRHS=5; J=LEAFIS;
-            IF(LEAFIS=1)[
-              ZLHS=1; I=LEAFIS;
-            ]
-            ELSE[
-              I=LEAFIS-1;
-              ZLHS=7;
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS) &
-                I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(I),1,6)=1)[
-                  ZLHS=2;
-              ]
-              IF(ZFL<ZREG_$SYNCHDMLC(I,ZLHS))[
-                ZLHS=1; I=LEAFIS;
-              ]
-            ]
-        ]
-        ELSEIF(NZ=5) [ZLHS=5; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSEIF(NZ=7) [ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-        ELSEIF(NZ=8) [ZLHS=8; I=LEAFIS; ZRHS=9; J=LEAFIS;]
-        ELSE[ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=3) [
-        IF(NZ=1) [ZLHS=1; I=LEAFIS; ZRHS=2; J=LEAFIS;]
-        ELSEIF(NZ<=5) [ZLHS=2; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSEIF(NZ=7) [ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-        ELSEIF(NZ=8) [ZLHS=8; I=LEAFIS; ZRHS=9; J=LEAFIS;]
-        ELSE [ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=4) [
-        IF(NZ<=2) [ZLHS=1; I=LEAFIS; ZRHS=3; J=LEAFIS;]
-        ELSEIF(NZ<=5) [ZLHS=3; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSEIF(NZ=7) [ZLHS=7; I=LEAFIS; ZRHS=8; J=LEAFIS;]
-        ELSEIF(NZ=8) [ZLHS=8; I=LEAFIS; ZRHS=9; J=LEAFIS;]
-        ELSE [ZLHS=9; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=5) [
-        IF(NZ<=2) [ZLHS=1; I=LEAFIS; ZRHS=3; J=LEAFIS;]
-        ELSEIF(NZ<=5) [ZLHS=3; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSE [ZLHS=7; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-    ELSEIF(NY=6) [
-        IF(NZ<=3) [
-          ZRHS=4; J=LEAFIS;
-          IF(LEAFIS=TOT_LEAF_$SYNCHDMLC)[
-            ZLHS=1; I=LEAFIS;
-          ]
-          ELSE[
-            I=LEAFIS+1;
-            IF(LEAFTYPE_$SYNCHDMLC(I)=3)[ "full leaf"
-              ZRHS=4;
-            ]
-            ELSE[ "half or quarter target"
-              ZRHS=6;
-            ]
-            IF(ZFL<ZREG_$SYNCHDMLC(I,ZRHS))[
-              ZLHS=1; I=LEAFIS;
-            ]
-          ]
-        ]
-        ELSEIF(NZ<=5) [ZLHS=4; I=LEAFIS; ZRHS=6; J=LEAFIS;]
-        ELSEIF(NZ=6) [ZLHS=6; I=LEAFIS; ZRHS=7; J=LEAFIS;]
-        ELSE [ZLHS=7; I=LEAFIS; ZRHS=10; J=LEAFIS;]
-    ]
-  ]
-  {P1}=ZLHS;
-  {P2}=ZRHS;
-};
-"end of GET_ZBOUNDS macro"
-
-
 " $SYNCHDMLC_MINDISTANCE;            "
 "===============================   "
 " The following macro will give the nearest distance the particle"
@@ -1104,6 +716,9 @@ REPLACE {$SYNCHDMLC_GET_ZBOUNDS(#,#);} WITH {;
 "{P1}: The change value for ir region #"
 
 REPLACE {$SYNCHDMLC_MINDISTANCE(#);} WITH {; "boundaries in Z direction"
+  "Note: some of these will underestimate dZ when input dimension"
+  "restrictions are overridden--this should not result in transport"
+  "errors, but will potentially slow transport"
   IF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=2 | LEAFTYPE_$SYNCHDMLC(LEAFIS)=4) [
                                    "Target leaf"
 
@@ -1120,7 +735,14 @@ REPLACE {$SYNCHDMLC_MINDISTANCE(#);} WITH {; "boundaries in Z direction"
     ELSEIF(NY=4 & NZ=9) [ZLHS=9; ZRHS=10;]
     ELSEIF((NY=5|NY=6) & (NZ=5|NZ=6)) [ZLHS=5; ZRHS=7;]
     ELSEIF((NY=5|NY=6) & NZ>=7) [ZLHS=7; ZRHS=10;]
-    ELSEIF(NY=6 & NZ<=2) [ZLHS=1; ZRHS=3;]
+    ELSEIF(NY=6 & NZ<=2) [
+      "dZ potentially overestimated--deal with it!"
+      IF(I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(LEAFIS),1,6)=1)[
+         IF(NZ=1)[ZLHS=1; ZRHS=2;]
+         ELSE[ZLHS=2; ZRHS=10;]
+      ]
+      ELSE[ZLHS=1; ZRHS=3;]
+    ]
 
   ] ELSEIF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=1) ["Full leaf"
 
@@ -1147,7 +769,14 @@ REPLACE {$SYNCHDMLC_MINDISTANCE(#);} WITH {; "boundaries in Z direction"
     ELSEIF((NY=1|NY=2) & (NZ=4|NZ=5)) [ZLHS=4; ZRHS=6;]
     ELSEIF(NZ=6) [ZLHS=6; ZRHS=7;]
     ELSEIF(NY<=4 & NZ=7) [ZLHS=7; ZRHS=8;]
-    ELSEIF(NY=1 & NZ>=8) [ZLHS=8; ZRHS=10;]
+    "potential overestimate of dZ below--correct it"
+    ELSEIF(NY=1 & NZ>=8) [
+      IF(I_LEAF_ALT_DEF_$SYNCHDMLC(3,1,1)=1)[
+        IF(NZ=9)[ZLHS=9; ZRHS=10;]
+        ELSE[ZLHS=1; ZRHS=9;]
+      ]
+      ELSE[ZLHS=8; ZRHS=10;]
+    ]
     ELSEIF((NY=2|NY=3|NY=4) & NZ=8) [ZLHS=8; ZRHS=9;]
     ELSEIF((NY=2|NY=3|NY=4) & NZ=9) [ZLHS=9; ZRHS=10;]
     ELSEIF(NY=3 & NZ=1) [ZLHS=1; ZRHS=2;]
@@ -1180,14 +809,6 @@ REPLACE {$SYNCHDMLC_MINDISTANCE(#);} WITH {; "boundaries in Z direction"
     "!= from Half Isocenter"
     ELSEIF(NY=6 & (NZ=4|NZ=5)) [ZLHS=4; ZRHS=6;]
   ]
-  /*
-  IF(W(NP)~=0) [
-     ZP = (ZREG_$SYNCHDMLC(J,ZRHS)-ZFL)/W(NP);
-     ZN = (ZREG_$SYNCHDMLC(I,ZLHS)-ZFL)/W(NP);
-     IF( (ZP>=0.0) & (ZN>=0.0) ) [ ZDIST =MIN(ZP, ZN); ]
-     ELSE [ ZDIST = MAX(ZP, ZN); ]
-   ]
-  */
   IF(W(NP)~=0) [
      ZP = (ZREG_$SYNCHDMLC(LEAFIS,ZRHS)-ZFL)/W(NP);
      ZN = (ZREG_$SYNCHDMLC(LEAFIS,ZLHS)-ZFL)/W(NP);

@@ -712,7 +712,7 @@ REPLACE {$GEO_SHIFT_1_(#)} WITH {
 }
 
 ;IMPLICIT NONE;
-;COMIN/MISC,CMs,CM_$SYNCHDMLC,EPCONT,STACK,USER,EGS-IO/;
+;COMIN/MISC,SCORE,CMs,CM_$SYNCHDMLC,EPCONT,STACK,USER,EGS-IO/;
 "T>
 "T>**********************************
 "T>TYPE DECLARATIONS FOR HOWFAR_$SYNCHDMLC
@@ -763,6 +763,14 @@ IF(ORIENT_$SYNCHDMLC=1) [
     XYL(1)=Y(NP); XYL(2)=X(NP);UVL(1)=V(NP);UVL(2)=U(NP);]
 ELSE[ XYL(1)=X(NP); XYL(2)=Y(NP);UVL(1)=U(NP);UVL(2)=V(NP);]
 ;
+
+"IF(Z(NP)>47.62001 & Z(NP)<54.37999)["
+        "IF(med(irl) = 0)["
+         " write(*,*)' iq,x,y,z ',iq(np),x(np),y(np),z(np);"
+         " write(*,*)' ir,med ',ir(np),med(irl);"
+         " write(*,*)'  ihstry ',ihstry;"
+       " ]"
+  " ]"
 STEP_UNIT=0.0;
 COUNT = 0;
 OUTOFCMFLAG=0;
@@ -838,17 +846,6 @@ ELSEIF(IR_$SYNCHDMLC=1 | IR_$SYNCHDMLC=2 | IR_$SYNCHDMLC=3) [
 "=========================
 
 $SYNCHDMLC_FIND(REGION_$SYNCHDMLC,0.0);
-/*
-IF(LEAFIS >=1 & LEAFIS<=TOT_LEAF_$SYNCHDMLC)[
-IF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=3 & NY=1)[
-  write(*,*)' ir, iq,np,x,y,z ',ir(np),iq(np),np,x(np),y(np),z(np);
-  write(*,*)' ir_loc, real_ir ',REGION_$SYNCHDMLC,IRSTART_$SYNCHDMLC+
-       REGION_$SYNCHDMLC-1;
-  write(*,*)' leafis,ny,nz ',leafis,ny,nz;
-  write(*,*);
-]
-]
-*/
 
 IF(REGION_$SYNCHDMLC=4) [ "Particle is in the air gap "
   REGION_$SYNCHDMLC=IRSTART_$SYNCHDMLC-1+REGION_$SYNCHDMLC;
@@ -978,6 +975,10 @@ ELSEIF( (STEP_UNIT>DIST1) & (DIST1>=0)) [
           ]
 
           IRNEW = NEWREGION_$SYNCHDMLC;
+          "Holy assumption: If there is no airgap between leaves, we could"
+          "have the situation where we do not transport as far as the new"
+          "region but the region no. is changed anyway"
+          "Consider using the _FIND macro to get the reg. no. anyway"
           RETURN;
        ] ELSE [
          $SYNCHDMLC_MINDISTANCE(DIST2);
@@ -2449,8 +2450,16 @@ IF(TOT_LEAF_$SYNCHDMLC>0) [
                           WTONGUE_$SYNCHDMLC(2);
      ]
      ELSEIF(LEAFTYPE_$SYNCHDMLC(I)=3)["half isocenter leaf"
-         YREG_$SYNCHDMLC(I,1)=YREG_$SYNCHDMLC(I-1,7)+LEAFGAP_$SYNCHDMLC-
+         IF(I_LEAF_ALT_DEF_$SYNCHDMLC(3,1,1)=1)[
+              "here we are saying that leaf gap is defined wrt tongue/groove"
+              YREG_$SYNCHDMLC(I,1)=YREG_$SYNCHDMLC(I-1,7)+LEAFGAP_$SYNCHDMLC-
+                          WTONGUE_$SYNCHDMLC(3)-
+                          ABS(WRAILBOT_$SYNCHDMLC(3)-WRAILTOP_$SYNCHDMLC(3));
+         ]
+         ELSE[
+              YREG_$SYNCHDMLC(I,1)=YREG_$SYNCHDMLC(I-1,7)+LEAFGAP_$SYNCHDMLC-
                           WTONGUE_$SYNCHDMLC(3);
+         ]
      ]
      ELSEIF(LEAFTYPE_$SYNCHDMLC(I)=4)["qtr target leaf"
          YREG_$SYNCHDMLC(I,1)=YREG_$SYNCHDMLC(I-1,7)+LEAFGAP_$SYNCHDMLC-
@@ -2496,7 +2505,12 @@ IF(TOT_LEAF_$SYNCHDMLC>0) [
      ELSEIF(LEAFTYPE_$SYNCHDMLC(I)=3)["half isocenter leaf"
        YREG_$SYNCHDMLC(I,2)=YREG_$SYNCHDMLC(I,1)+ABS(WRAILTOP_$SYNCHDMLC(3)-
                           WRAILBOT_$SYNCHDMLC(3));
-       YREG_$SYNCHDMLC(I,3)=YREG_$SYNCHDMLC(I,1)+WTONGUE_$SYNCHDMLC(3);
+       IF(I_LEAF_ALT_DEF_$SYNCHDMLC(3,1,1)=1)[
+          YREG_$SYNCHDMLC(I,3)=YREG_$SYNCHDMLC(I,2)+WTONGUE_$SYNCHDMLC(3);
+       ]
+       ELSE[
+          YREG_$SYNCHDMLC(I,3)=YREG_$SYNCHDMLC(I,1)+WTONGUE_$SYNCHDMLC(3);
+       ]
        YREG_$SYNCHDMLC(I,4)=YREG_$SYNCHDMLC(I,3)+WTIP_$SYNCHDMLC(3);
        IF(I_LEAF_ALT_DEF_$SYNCHDMLC(3,1,1)=1)[
           YREG_$SYNCHDMLC(I,5)=YREG_$SYNCHDMLC(I,1)+WRAILBOT_$SYNCHDMLC(3);
@@ -2918,7 +2932,6 @@ DO L=1,TOT_LEAF_$SYNCHDMLC[
       SUBINDEX_$SYNCHDMLC(L,I,4,6)=2;
       SUBINDEX_$SYNCHDMLC(L,I,4,7)=2;
       SUBINDEX_$SYNCHDMLC(L,I,4,8)=2;
-
       IF(I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(L),1,5)~=1)[
          SUBINDEX_$SYNCHDMLC(L,I,5,1)=2;
       ]
@@ -2989,12 +3002,9 @@ DO L=1,TOT_LEAF_$SYNCHDMLC[
       ]
       SUBINDEX_$SYNCHDMLC(L,I,2,5)=2;
       SUBINDEX_$SYNCHDMLC(L,I,2,7)=2;
-      SUBINDEX_$SYNCHDMLC(L,I,2,8)=2;
-
       IF(I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(L),1,2)~=1)[
          SUBINDEX_$SYNCHDMLC(L,I,2,9)=2;
       ]
-      SUBINDEX_$SYNCHDMLC(L,I,3,1)=2;
       SUBINDEX_$SYNCHDMLC(L,I,3,2)=2;
       SUBINDEX_$SYNCHDMLC(L,I,3,3)=2;
       SUBINDEX_$SYNCHDMLC(L,I,3,4)=2;
@@ -3731,7 +3741,7 @@ IF(LEAFIS~=0) [
    "Set minimum and maximum Z boundaries"
     IF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=2 | LEAFTYPE_$SYNCHDMLC(LEAFIS)=4) [
       "Quarter or Half Target leaf"
-      "Deal with each NY case"
+
       IF(NY=1) [
         IF(NZ<=3) [I1=1; I2=4;]
         ELSEIF(NZ=4) [I1=4; I2=5;]
@@ -3778,7 +3788,7 @@ IF(LEAFIS~=0) [
       ]
       ELSEIF(NY=6) [
         IF(I_LEAF_ALT_DEF_$SYNCHDMLC(LEAFTYPE_$SYNCHDMLC(LEAFIS),1,6)=1) [
-          IF(NZ=1) [I1=1; I2=1;]
+          IF(NZ=1) [I1=1; I2=2;]
           ELSE[ I1=2; I2=10;]
         ]
         ELSE [
@@ -3789,6 +3799,7 @@ IF(LEAFIS~=0) [
           ELSE [ I1=7; I2=10;]
         ]
       ]
+
     ] ELSEIF(LEAFTYPE_$SYNCHDMLC(LEAFIS)=1) [
       "Full leaf"
 
